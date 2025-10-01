@@ -418,8 +418,6 @@
     </footer>
 
     <script>
-        // Ολός ο JavaScript κώδικας από πριν (δεν τον επαναλαμβάνω για λόγους συμπάγειας)
-        // Μπορείς να χρησιμοποιήσεις τον ίδιο κώδικα JavaScript από την προηγούμενη απάντηση
         document.addEventListener('DOMContentLoaded', function() {
             const searchBtn = document.getElementById('search-btn');
             const citySelect = document.getElementById('city');
@@ -464,7 +462,367 @@
                 }, 1500);
             });
             
-            // ... όλος ο υπόλοιπος κώδικας JavaScript
+            // Generate recommendations based on selections
+            function generateRecommendations(city, days, priceLevel) {
+                const cityData = getCityData(city, priceLevel);
+                
+                // Clear previous results
+                resultsSection.innerHTML = '';
+                
+                // Create categories
+                const categories = [
+                    { id: 'hotels', name: 'Ξενοδοχεία', icon: '🏨', items: cityData.hotels },
+                    { id: 'restaurants', name: 'Εστιατόρια', icon: '🍽️', items: cityData.restaurants },
+                    { id: 'bars', name: 'Μπαρ & Καφέ', icon: '🍸', items: cityData.bars },
+                    { id: 'museums', name: 'Μουσεία', icon: '🏛️', items: cityData.museums },
+                    { id: 'attractions', name: 'Αξιοθέατα', icon: '🏰', items: cityData.attractions }
+                ];
+                
+                // Create category sections
+                categories.forEach(category => {
+                    if (category.items && category.items.length > 0) {
+                        const categoryElement = createCategoryElement(category);
+                        resultsSection.appendChild(categoryElement);
+                    }
+                });
+                
+                // Create warnings section
+                if (cityData.warnings && cityData.warnings.length > 0) {
+                    const warningsElement = createWarningsElement(cityData.warnings);
+                    resultsSection.appendChild(warningsElement);
+                }
+            }
+            
+            // Create category element
+            function createCategoryElement(category) {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category';
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'category-header';
+                headerDiv.innerHTML = `
+                    <span class="category-icon">${category.icon}</span>
+                    <h2>${category.name}</h2>
+                `;
+                
+                const recommendationsDiv = document.createElement('div');
+                recommendationsDiv.className = 'recommendations';
+                
+                category.items.forEach(item => {
+                    const recElement = createRecommendationElement(item);
+                    recommendationsDiv.appendChild(recElement);
+                });
+                
+                categoryDiv.appendChild(headerDiv);
+                categoryDiv.appendChild(recommendationsDiv);
+                
+                return categoryDiv;
+            }
+            
+            // Create recommendation element
+            function createRecommendationElement(item) {
+                const recDiv = document.createElement('div');
+                recDiv.className = 'recommendation';
+                
+                const imageDiv = document.createElement('div');
+                imageDiv.className = 'rec-image';
+                if (item.image) {
+                    imageDiv.style.backgroundImage = `url(${item.image})`;
+                    imageDiv.style.backgroundSize = 'cover';
+                    imageDiv.style.backgroundPosition = 'center';
+                } else {
+                    imageDiv.innerHTML = '<i class="fas fa-image"></i>';
+                }
+                
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'rec-details';
+                
+                let ratingHtml = '';
+                if (item.rating) {
+                    ratingHtml = `<div class="rec-rating">${generateStars(item.rating)} <span>${item.rating}/5</span></div>`;
+                }
+                
+                let priceHtml = '';
+                if (item.price) {
+                    priceHtml = `<div class="rec-price">${item.price}</div>`;
+                }
+                
+                let locationHtml = '';
+                if (item.location) {
+                    locationHtml = `<div class="rec-location"><i class="fas fa-map-marker-alt"></i> ${item.location}</div>`;
+                }
+                
+                detailsDiv.innerHTML = `
+                    <h3 class="rec-title">${item.name}</h3>
+                    ${ratingHtml}
+                    ${priceHtml}
+                    <p class="rec-description">${item.description}</p>
+                    ${locationHtml}
+                    <div class="rec-links">
+                        ${item.website ? `<a href="${item.website}" target="_blank" class="rec-link"><i class="fas fa-external-link-alt"></i> Ιστοσελίδα</a>` : ''}
+                        <a href="${item.maps || '#'}" target="_blank" class="rec-link"><i class="fas fa-map-marked-alt"></i> Χάρτης</a>
+                    </div>
+                `;
+                
+                recDiv.appendChild(imageDiv);
+                recDiv.appendChild(detailsDiv);
+                
+                return recDiv;
+            }
+            
+            // Create warnings element
+            function createWarningsElement(warnings) {
+                const warningsDiv = document.createElement('div');
+                warningsDiv.className = 'warnings';
+                
+                let warningsHTML = '<h3><i class="fas fa-exclamation-triangle"></i> Τι να αποφύγεις</h3>';
+                warnings.forEach(warning => {
+                    warningsHTML += `<div class="warning-item">${warning}</div>`;
+                });
+                
+                warningsDiv.innerHTML = warningsHTML;
+                return warningsDiv;
+            }
+            
+            // Generate star rating
+            function generateStars(rating) {
+                let stars = '';
+                for (let i = 1; i <= 5; i++) {
+                    if (i <= rating) {
+                        stars += '★';
+                    } else {
+                        stars += '☆';
+                    }
+                }
+                return stars;
+            }
+            
+            // Get city data
+            function getCityData(cityName, priceLevel) {
+                const cityData = {
+                    'Paris': getParisData(priceLevel),
+                    'Rome': getRomeData(priceLevel),
+                    'Barcelona': getBarcelonaData(priceLevel),
+                    'Amsterdam': getAmsterdamData(priceLevel),
+                    'Berlin': getBerlinData(priceLevel),
+                    'Prague': getPragueData(priceLevel),
+                    'Vienna': getViennaData(priceLevel),
+                    'Athens': getAthensData(priceLevel),
+                    'Lisbon': getLisbonData(priceLevel),
+                    'London': getLondonData(priceLevel)
+                };
+                
+                return cityData[cityName] || getParisData(priceLevel);
+            }
+            
+            // Mock data for Paris
+            function getParisData(priceLevel) {
+                return {
+                    hotels: [
+                        {
+                            name: "Hôtel Le Bristol Paris",
+                            description: "Πολυτελές ξενοδοχείο με πισίνα στην οροφή και εστιατόριο με 3 αστέρια Michelin. Βραβευμένο ως το καλύτερο ξενοδοχείο στον κόσμο.",
+                            rating: 5,
+                            price: "€€€€",
+                            location: "rue du Faubourg Saint-Honoré",
+                            image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        },
+                        {
+                            name: "Hôtel Fabric",
+                            description: "Μποτικ ξενοδοχείο σε πρώην βιομηχανικό κτίριο με μοντέρνο σχεδιασμό. Βρίσκεται στο τρεντί περιοχή Oberkampf.",
+                            rating: 4,
+                            price: "€€",
+                            location: "11ème Arrondissement",
+                            image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        },
+                        {
+                            name: "Generator Paris",
+                            description: "Σύγχρονο hostel με κοινόχρηστους χώρους και μπαρ στην οροφή. Ιδανικό για νέους ταξιδιώτες.",
+                            rating: 3,
+                            price: "€",
+                            location: "10ème Arrondissement",
+                            image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        }
+                    ],
+                    restaurants: [
+                        {
+                            name: "Le Jules Verne",
+                            description: "Εστιατόριο με θέα στον Πύργο του Άιφελ, υπό την καθοδήγηση του σεφ Alain Ducasse. Αριστούργημα γαλλικής κουζίνας.",
+                            rating: 5,
+                            price: "€€€€",
+                            location: "Πύργος του Άιφελ",
+                            image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        },
+                        {
+                            name: "Septime",
+                            description: "Σύγχρονο γαλλικό εστιατόριο με δημιουργική κουζίνα και φιλική ατμόσφαιρα. Βραβευμένο με 1 αστέρι Michelin.",
+                            rating: 4,
+                            price: "€€€",
+                            location: "11ème Arrondissement",
+                            image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        },
+                        {
+                            name: "Chez Gladines",
+                            description: "Παραδοσιακό εστιατόριο με βασκική κουζίνα και φιλικές τιμές. Δημοφιλές στους ντόπιους.",
+                            rating: 4,
+                            price: "€",
+                            location: "13ème Arrondissement",
+                            image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        }
+                    ],
+                    bars: [
+                        {
+                            name: "Le Syndicat",
+                            description: "Κοκτέιλ μπαρ με έμφαση σε γαλλικά ποτά και μοντέρνο σχεδιασμό. Βραβευμένο ως ένα από τα καλύτερα μπαρ στον κόσμο.",
+                            rating: 4,
+                            price: "€€",
+                            location: "rue du Faubourg Saint-Denis",
+                            image: "https://images.unsplash.com/photo-1536935338788-846bb9981813?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        },
+                        {
+                            name: "Little Red Door",
+                            description: "Επιλεγμένο ως ένα από τα καλύτερα μπαρ στον κόσμο, με δημιουργικά κοκτέιλ και μοναδική ατμόσφαιρα.",
+                            rating: 5,
+                            price: "€€€",
+                            location: "rue Charlot",
+                            image: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        },
+                        {
+                            name: "Café de Flore",
+                            description: "Ιστορικό καφέ που φιλοξενούσε διανοούμενους, ιδανικό για παρακολούθηση ανθρώπων. Σύμβολο του Παρισιού.",
+                            rating: 4,
+                            price: "€€",
+                            location: "Saint-Germain-des-Prés",
+                            image: "https://images.unsplash.com/photo-1445116572660-236099ec97a0?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        }
+                    ],
+                    museums: [
+                        {
+                            name: "Μουσείο του Λούβρου",
+                            description: "Το μεγαλύτερο μουσείο τέχνης στον κόσμο, σπίτι της Μόνας Λίζας και της Αφροδίτης της Μήλου. Απαραίτητη επίσκεψη.",
+                            rating: 5,
+                            price: "€€",
+                            location: "rue de Rivoli",
+                            image: "https://images.unsplash.com/photo-1594641033824-3167451a727b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        },
+                        {
+                            name: "Μουσείο Ορσέ",
+                            description: "Μουσείο εντυπωσιακών έργων impressionist και post-impressionist σε πρώην σιδηροδρομικό σταθμό. Αριστούργημα αρχιτεκτονικής.",
+                            rating: 5,
+                            price: "€€",
+                            location: "rue de la Légion d'Honneur",
+                            image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        },
+                        {
+                            name: "Κέντρο Πομπιντού",
+                            description: "Μουσείο μοντέρνας και σύγχρονης τέχνης με μοναδική αρχιτεκτονική. Εξαιρετική θέα από την οροφή.",
+                            rating: 4,
+                            price: "€€",
+                            location: "Place Georges-Pompidou",
+                            image: "https://images.unsplash.com/photo-1587332212137-60d5adf4045c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        }
+                    ],
+                    attractions: [
+                        {
+                            name: "Πύργος του Άιφελ",
+                            description: "Το πιο αναγνωρίσιμο αξιοθέατο του Παρισιού, με εκπληκτική θέα από την κορυφή. Απογευματινό ταξίδι συνιστάται.",
+                            rating: 5,
+                            price: "€€",
+                            location: "Champ de Mars",
+                            image: "https://images.unsplash.com/photo-1543349689-9a4d426bee8e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        },
+                        {
+                            name: "Νοτρ-Νταμ",
+                            description: "Ιστορικός γοτθικός καθεδρικός ναός, θρησκευτικό και αρχιτεκτονικό αριστούργημα. Σημαντικό ιστορικό σημείο.",
+                            rating: 5,
+                            price: "Δωρεάν",
+                            location: "Île de la Cité",
+                            image: "https://images.unsplash.com/photo-1502602898536-47ad22581b52?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        },
+                        {
+                            name: "Μονμάρτρη & Βασιλική της Ιερής Καρδιάς",
+                            description: "Ιστορική γειτονιά καλλιτεχνών με εκπληκτική θέα και τον διάσημο καθεδρικό ναό. Πνευματική καρδιά του Παρισιού.",
+                            rating: 4,
+                            price: "Δωρεάν",
+                            location: "18ème Arrondissement",
+                            image: "https://images.unsplash.com/photo-1568707043657-70e5d741ccf9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+                            website: "#",
+                            maps: "#"
+                        }
+                    ],
+                    warnings: [
+                        "Αποφύγετε τους 'φιλοξενούμενους' που προσπαθούν να σας δέσουν ένα βραχιόλι στο χέρι - είναι απάτη",
+                        "Προσοχή με τους επιδρομείς στο μετρό, ειδικά στις τουριστικές περιοχές",
+                        "Μην αγοράζετε εισιτήρια για αξιοθέατα από δρόμους - αγοράστε μόνο από επίσημα σημεία",
+                        "Τα εστιατόρια κοντά σε τουριστικά αξιοθέατα είναι συχνά υπερτιμημένα - περπατήστε λίγες πλατείες μακριά"
+                    ]
+                };
+            }
+            
+            // Similar functions for other cities (simplified)
+            function getRomeData(priceLevel) {
+                return getParisData(priceLevel); // Placeholder - in real app, you'd have different data
+            }
+            
+            function getBarcelonaData(priceLevel) {
+                return getParisData(priceLevel); // Placeholder
+            }
+            
+            function getAmsterdamData(priceLevel) {
+                return getParisData(priceLevel); // Placeholder
+            }
+            
+            function getBerlinData(priceLevel) {
+                return getParisData(priceLevel); // Placeholder
+            }
+            
+            function getPragueData(priceLevel) {
+                return getParisData(priceLevel); // Placeholder
+            }
+            
+            function getViennaData(priceLevel) {
+                return getParisData(priceLevel); // Placeholder
+            }
+            
+            function getAthensData(priceLevel) {
+                return getParisData(priceLevel); // Placeholder
+            }
+            
+            function getLisbonData(priceLevel) {
+                return getParisData(priceLevel); // Placeholder
+            }
+            
+            function getLondonData(priceLevel) {
+                return getParisData(priceLevel); // Placeholder
+            }
         });
     </script>
 </body>
